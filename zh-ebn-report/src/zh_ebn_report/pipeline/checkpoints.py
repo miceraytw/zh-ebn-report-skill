@@ -9,6 +9,8 @@ be skipped** (ethical floor).
 
 from __future__ import annotations
 
+import os
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -52,6 +54,35 @@ def prompt(
     console.print(Panel(spec.body, title=f"[bold cyan]{spec.cp_id.value}: {spec.title}[/]", border_style="cyan"))
 
     can_auto = auto_yes and spec.cp_id not in _MUST_CONFIRM
+    # Headless override: for must-confirm CPs, require the caller to have
+    # already written a decision via `tools approve-cp` (or set the
+    # ZH_EBN_REPORT_NONINTERACTIVE_CONFIRM env var for explicit opt-in). Raise
+    # a clear error instead of dropping into an EOF-aborted Rich prompt.
+    non_tty = not sys.stdin.isatty()
+    if not can_auto and spec.cp_id in _MUST_CONFIRM and non_tty:
+        confirm_env = os.environ.get("ZH_EBN_REPORT_NONINTERACTIVE_CONFIRM", "").lower()
+        if confirm_env in {"1", "true", "yes"}:
+            choice = spec.default_choice
+            console.print(
+                f"[yellow]non-TTY + ZH_EBN_REPORT_NONINTERACTIVE_CONFIRM=1: "
+                f"套用預設 [bold]{choice}[/][/]"
+            )
+            rationale = "headless-confirm via env"
+            cp = Checkpoint(
+                cp_id=spec.cp_id,
+                timestamp=datetime.utcnow(),
+                user_choice=choice,
+                rationale=rationale,
+                phase_snapshot_path=str(state_path(pipeline_cfg, state.config.run_id)),
+            )
+            append_checkpoint(pipeline_cfg, state, cp)
+            return choice
+        raise RuntimeError(
+            f"{spec.cp_id.value} 為倫理防線，須於 TTY 互動確認；"
+            "若在 Claude Code／CI 等無 TTY 環境執行，請先用 "
+            "`zh-ebn-report tools approve-cp` 寫入決策，或設 "
+            "ZH_EBN_REPORT_NONINTERACTIVE_CONFIRM=1 明確同意。"
+        )
     if can_auto:
         choice = spec.default_choice
         console.print(f"[yellow]auto_yes: 套用預設選項 [bold]{choice}[/][/]")

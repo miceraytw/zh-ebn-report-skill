@@ -72,7 +72,7 @@ zh-ebn-report render --final                        # 去 DRAFT 後綴（需已 
 zh-ebn-report status <run-id>
 ```
 
-Pipeline 最終輸出 **`<報告>-DRAFT.docx`**（Quarto → pandoc → DOCX，以 `templates/reference.docx` 為樣式母本，APA 7 CSL 引文排版），含搜尋歷程表、CASP 評讀表、PRISMA 風格流程圖、AI 協作聲明頁。
+Pipeline 最終輸出 **`<報告>-DRAFT.docx`**（Quarto → pandoc → DOCX，APA 7 CSL 引文排版），含搜尋歷程表、CASP 評讀表、PRISMA 風格流程圖、AI 協作聲明頁。若 `templates/reference.docx`（可選）存在，將做為樣式母本套用院內字型與樣式；否則以 pandoc 預設樣式輸出。
 
 **倫理守則**（依 2026 年台灣護理學會與台灣實證護理學會規範；詳見 `references/ai-disclosure.md`）：
 - **AI 可以完全生成草稿**，但**使用者必須 audit、揭露、承擔責任**

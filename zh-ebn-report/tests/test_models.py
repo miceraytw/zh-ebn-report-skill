@@ -102,6 +102,7 @@ class TestCaspItem:
 
 class TestPaper:
     def test_citekey_generation(self) -> None:
+        # PubMed-style "Surname Initials" must yield the surname (not the initial)
         p = Paper(
             title="Music therapy reduces postoperative anxiety",
             authors=["Smith J", "Doe A"],
@@ -112,6 +113,17 @@ class TestPaper:
             oxford_level=OxfordLevel.II,
             source_db=SourceDB.PUBMED,
         )
-        assert p.citekey().startswith("j2023")  # surname is "J" (given name only)
-        # (Author parsing is simplistic; real papers use "Smith J" so surname ≠ "J")
-        # but we verify the function runs without crashing.
+        assert p.citekey().startswith("smith2023")
+
+        # Also accept "Surname, Initials" comma form
+        p2 = Paper(
+            title="Another study",
+            authors=["Smith, J", "Doe, A"],
+            year=2024,
+            journal="JAN",
+            doi="10.1111/jan.16001",
+            study_design=StudyDesign.RCT,
+            oxford_level=OxfordLevel.II,
+            source_db=SourceDB.PUBMED,
+        )
+        assert p2.citekey().startswith("smith2024")

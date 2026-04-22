@@ -12,7 +12,9 @@ Layout under ``output/<run-id>/quarto/``::
 
 The main ``render_to_docx`` function:
 1. Writes all files
-2. Runs ``quarto render report.qmd --to docx --reference-doc=<templates/reference.docx>``
+2. Runs ``quarto render report.qmd --to docx`` (a ``templates/reference.docx``
+   style master is optional; if present it is copied next to the project and
+   referenced via ``reference-doc:`` in ``_quarto.yml``)
 3. Copies the DOCX to ``output/<run-id>/<topic>-DRAFT.docx``
 """
 
@@ -79,7 +81,7 @@ AI 具體協助範圍包括：
 """
 
 
-def _quarto_yml(state: RunState, *, has_csl: bool) -> str:
+def _quarto_yml(state: RunState, *, has_csl: bool, has_reference_doc: bool) -> str:
     parts = [
         "project:",
         "  type: default",
@@ -87,9 +89,10 @@ def _quarto_yml(state: RunState, *, has_csl: bool) -> str:
         "  docx:",
         "    toc: true",
         "    number-sections: true",
-        "    reference-doc: ../reference.docx",
-        "bibliography: references.bib",
     ]
+    if has_reference_doc:
+        parts.append("    reference-doc: ../reference.docx")
+    parts.append("bibliography: references.bib")
     if has_csl:
         parts.append("csl: apa-7th-edition.csl")
     parts.append("lang: zh-TW")
@@ -157,11 +160,15 @@ def render_to_docx(app_cfg: AppConfig, state: RunState) -> Path:
 
     # Reference docx (optional but recommended)
     ref_src = _TEMPLATES_DIR / "reference.docx"
-    if ref_src.exists():
+    has_reference_doc = ref_src.exists()
+    if has_reference_doc:
         shutil.copy(ref_src, rd / "reference.docx")
 
     # _quarto.yml
-    (qd / "_quarto.yml").write_text(_quarto_yml(state, has_csl=has_csl), encoding="utf-8")
+    (qd / "_quarto.yml").write_text(
+        _quarto_yml(state, has_csl=has_csl, has_reference_doc=has_reference_doc),
+        encoding="utf-8",
+    )
 
     # Appendices in canonical order: A 搜尋歷程 → B CASP → C PRISMA → D Subagent log
     appendix_parts: list[str] = []

@@ -245,8 +245,20 @@ class Paper(BaseModel):
     abstract: str | None = None
 
     def citekey(self) -> str:
-        """Generate a BibTeX cite key: first-author-surname + year + first-title-word."""
-        surname = self.authors[0].split()[-1] if self.authors else "Anon"
+        """Generate a BibTeX cite key: first-author-surname + year + first-title-word.
+
+        PubMed delivers authors as "Surname Initials" (e.g., "Kumar R"), so the
+        surname is the *first* whitespace-separated token — not the last. For
+        "Surname, Initials" comma-form we also take the leading token.
+        """
+
+        if not self.authors:
+            surname = "Anon"
+        else:
+            first_author = self.authors[0].strip()
+            # Strip trailing comma if present ("Kumar, R" → ["Kumar,", "R"])
+            head = first_author.split()[0] if first_author else "Anon"
+            surname = head.rstrip(",")
         first_word = (self.title.split(" ", 1)[0] if self.title else "paper").lower()
         safe_word = "".join(c for c in first_word if c.isalnum())[:10]
         return f"{surname.lower()}{self.year}{safe_word}"
