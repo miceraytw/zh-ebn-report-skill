@@ -1,0 +1,56 @@
+# 去識別化個案資料範例
+# 所有姓名、病歷號、身分證、具體出生日期均已去除
+# 年齡以區間表示；時間以相對日期表示
+
+demographics:
+  age_group: "70-75 歲"
+  sex: "M"
+
+chief_complaint_zh: "發燒、呼吸喘促 3 日"
+
+present_illness_zh: |
+  個案因社區性肺炎入院，入院第 2 日因呼吸衰竭插管轉入加護病房。
+  插管第 3 日開始出現夜間躁動、拔管嘗試、對人時地定向感下降。
+  經 CAM 評估為陽性（注意力不集中 + 認知波動 + 行為不一致）。
+
+past_medical_history:
+  - "高血壓"
+  - "輕度認知障礙（家屬描述）"
+  - "白內障手術（數年前）"
+
+family_history:
+  - "失智症（父）"
+
+allergies:
+  - "無已知藥物過敏"
+
+medications_on_admission:
+  - "Amlodipine 5 mg QD"
+  - "Metformin 500 mg BID"
+
+examinations:
+  - name: "CAM-ICU"
+    value: "positive（入院第 4 日）"
+  - name: "RASS"
+    value: "+2（焦躁）"
+  - name: "胸部 X 光"
+    value: "右下肺浸潤減輕"
+
+nursing_assessment:
+  身體評估: "插管中，SpO2 97% under FiO2 40%；肢體力氣 4/5。"
+  心理評估: "明顯焦躁、對家屬短暫辨識後又不認得。"
+  社會文化: "子女輪流陪伴；家屬表達希望減少鎮靜藥物。"
+
+timeline:
+  - timestamp: "入院第 4 日 08:00"
+    event: "CAM 陽性，RASS +2"
+    observations: "開始討論非藥物介入（現實導向、環境調整、家屬參與）"
+  - timestamp: "入院第 4 日 12:00"
+    event: "介入啟動：床頭時鐘、家屬錄音問候、每 2 小時定向提示"
+    observations: "個案短暫注視時鐘，眼神較平靜"
+  - timestamp: "入院第 6 日 08:00"
+    event: "CAM 再評估"
+    observations: "CAM 陰性，RASS 0，個案能跟著指令做握拳動作"
+  - timestamp: "入院第 7 日 10:00"
+    event: "拔管成功"
+    observations: "個案流淚感謝家屬陪伴"

@@ -1,0 +1,15 @@
+.DS_Store
+*.zip
+*.skill
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+.env
+dist/
+build/
+*.egg-info/
+output/
