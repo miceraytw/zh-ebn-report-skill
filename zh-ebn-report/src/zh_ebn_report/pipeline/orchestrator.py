@@ -23,6 +23,7 @@ from .compliance import (
     check_sections,
     retry_feedback_for_section,
 )
+from .apa_guard import normalize_apa_result
 from .evidence_guard import enforce_evidence_levels
 from .searcher import run_searches
 from .synthesis_guard import normalize_synthesis
@@ -379,6 +380,19 @@ class Orchestrator:
         # the LLM's self-reported total_violations / pass_threshold_met are
         # replaced with values derived from the merged violation set.
         voice = normalize_voice_result(voice, full_draft)
+        # A3 (v0.5): the LLM's self-reported apa_pass is replaced with a
+        # Python-derived truth value based on DOI validation + citation-
+        # existence + LLM-declared format issues.
+        sections_by_name = {s.section_name: s for s in state.sections}
+        apa, apa_reasons = normalize_apa_result(
+            apa, state.search_result.papers, sections_by_name
+        )
+        if apa_reasons:
+            log.warning(
+                "apa_guard 覆寫 apa_pass=%s；原因：\n  %s",
+                apa.apa_pass,
+                "\n  ".join(apa_reasons),
+            )
         state.voice_check = voice
         state.apa_check = apa
         state.current_phase = PipelinePhase.CHECK

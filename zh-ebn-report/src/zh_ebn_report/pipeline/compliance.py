@@ -238,6 +238,14 @@ def check_sections(state: RunState, *, kind: ReportKind) -> ComplianceReport:
     # 4f. 結論 / 應用建議 forbids absolute language (全面推廣 etc.).
     report.issues.extend(_check_absolute_language(sections_by_name))
 
+    # 4g. citation_placeholders 欄位與 content_zh 實際內文對帳（A2a）。
+    report.issues.extend(
+        _check_citation_content_matches_placeholders(sections_by_name)
+    )
+
+    # 4h. 所有引用的 citekey 必須對應到實際 Paper（防 LLM 捏造 APA 引用；A2b）。
+    report.issues.extend(_check_citation_keys_exist(sections_by_name, papers))
+
     # 5. Total-body length (hard page cap for TWNA submissions)
     report.issues.extend(_check_total_length(state, kind=kind))
 
@@ -382,6 +390,90 @@ def _check_case_privacy(
 _ABSOLUTE_LANGUAGE_RE = re.compile(
     r"(全面推廣|所有病房|以後都這樣做|一律適用|永遠有效|百分之百有效|毫無風險)"
 )
+
+# A2: citekey 正規表示式，對應 pandoc/CSL 可接受的 BibTeX key 字元集。
+_CITEKEY_IN_CONTENT_RE = re.compile(r"\[@([A-Za-z0-9][A-Za-z0-9_:\-]*)\]")
+
+
+def _parse_citekeys_from_content(text: str) -> set[str]:
+    """解析內文裡所有 ``[@citekey]`` 佔位，回傳 citekey 集合（不含 `@` 前綴）。"""
+
+    return {m.group(1) for m in _CITEKEY_IN_CONTENT_RE.finditer(text)}
+
+
+def _check_citation_content_matches_placeholders(
+    sections_by_name: dict[str, Section],
+) -> list[ComplianceIssue]:
+    """A2a: ``Section.citation_placeholders``（LLM 自填）必須跟 ``content_zh`` 裡
+    真正出現的 ``[@key]`` 佔位一致。LLM 有時只填了一半或填了不存在的 key。
+
+    目前 ``_check_citation_coverage`` 信任 placeholders，這個 check 讓內文與欄位
+    互相對帳。
+    """
+
+    issues: list[ComplianceIssue] = []
+    for name, sec in sections_by_name.items():
+        # Normalize placeholders: field 可能有 "@key" 或 "key" 兩種形式
+        reported = {p.lstrip("@") for p in sec.citation_placeholders}
+        actual = _parse_citekeys_from_content(sec.content_zh)
+        in_content_only = actual - reported
+        in_field_only = reported - actual
+        if in_content_only:
+            issues.append(
+                ComplianceIssue(
+                    section=name,
+                    rule="citation_placeholder_missing_from_field",
+                    detail=(
+                        f"內文出現 {len(in_content_only)} 個未登記於 "
+                        "citation_placeholders 的引用："
+                        + ", ".join(sorted(in_content_only)[:3])
+                        + "；LLM 自填欄位不符實際內文"
+                    ),
+                )
+            )
+        if in_field_only:
+            issues.append(
+                ComplianceIssue(
+                    section=name,
+                    rule="citation_placeholder_field_phantom",
+                    detail=(
+                        f"citation_placeholders 列了 {len(in_field_only)} 個"
+                        "但內文未出現："
+                        + ", ".join(sorted(in_field_only)[:3])
+                    ),
+                    severity="warning",  # 通常不致命，但讓 audit 可見
+                )
+            )
+    return issues
+
+
+def _check_citation_keys_exist(
+    sections_by_name: dict[str, Section],
+    papers: list[Paper],
+) -> list[ComplianceIssue]:
+    """A2b: 所有內文的 ``[@citekey]`` 必須對應到 ``papers`` 的某篇 Paper。
+
+    不存在 → 引用捏造。CSL 渲染時會印成 ``[@key?]`` 但 reviewer 可能漏看；
+    compliance 在這裡直接擋下來。
+    """
+
+    valid_keys = {p.citekey() for p in papers}
+    issues: list[ComplianceIssue] = []
+    for name, sec in sections_by_name.items():
+        actual = _parse_citekeys_from_content(sec.content_zh)
+        orphans = actual - valid_keys
+        for key in sorted(orphans):
+            issues.append(
+                ComplianceIssue(
+                    section=name,
+                    rule="citation_key_orphan",
+                    detail=(
+                        f"引用 [@{key}] 在 papers 清單找不到對應 citekey；"
+                        "疑似 LLM 捏造 APA 引用"
+                    ),
+                )
+            )
+    return issues
 
 
 def _check_absolute_language(

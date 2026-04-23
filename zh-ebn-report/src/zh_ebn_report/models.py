@@ -7,12 +7,13 @@ orchestrator, and the Quarto renderer. Every contract in
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -230,11 +231,9 @@ class SixPieceStrategy(BaseModel):
         # search_strategist.md:44 — 禁止 > 3 個 OR 連接的自由字群（> 4 terms）。
         # Count OR operators inside each parenthesized group; flag if any
         # single group has more than 3 OR (i.e. 5+ terms).
-        import re as _re
-
-        for group_match in _re.finditer(r"\(([^()]+)\)", v):
+        for group_match in re.finditer(r"\(([^()]+)\)", v):
             inner = group_match.group(1)
-            or_count = len(_re.findall(r"\b[Oo][Rr]\b", inner))
+            or_count = len(re.findall(r"\b[Oo][Rr]\b", inner))
             if or_count > 3:
                 raise ValueError(
                     f"Boolean 查詢出現 {or_count + 1} 個 OR-連接自由字群"
@@ -283,6 +282,29 @@ class Paper(BaseModel):
     oxford_level: OxfordLevel
     source_db: SourceDB
     abstract: str | None = None
+
+    @model_validator(mode="after")
+    def apa_required_fields(self) -> Paper:
+        # A1 (v0.5): CSL+bib 渲染 APA 需要 non-empty author/title/journal/year。
+        # 以前 journal="" 會產出醜格式；authors=[] 會渲 "Anon"；都是壞的。
+        if not self.title.strip():
+            raise ValueError("Paper.title 不得為空（APA 7 必填：works 類別標題）")
+        if not self.journal.strip():
+            raise ValueError(
+                "Paper.journal 不得為空（APA 7 必填：source 欄位；"
+                "CSL 會因此產出 ', , .' 格式錯誤）"
+            )
+        if not self.authors or not any(a.strip() for a in self.authors):
+            raise ValueError(
+                "Paper.authors 至少需要一位非空作者（APA 7 必填：contributor）"
+            )
+        # 年份合理區間；`+1` 保留 in-press 情境
+        current_year = datetime.now().year
+        if not (1900 <= self.year <= current_year + 1):
+            raise ValueError(
+                f"Paper.year={self.year} 超出合理區間 [1900, {current_year + 1}]"
+            )
+        return self
 
     def citekey(self) -> str:
         """Generate a BibTeX cite key: first-author-surname + year + first-title-word.
