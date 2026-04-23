@@ -72,6 +72,22 @@ zh-ebn-report render --final                        # 去 DRAFT 後綴（需已 
 zh-ebn-report status <run-id>
 ```
 
+**Guardrail 架構（v0.2+）**：pipeline 不再只靠 LLM 自律。每一個 LLM 寫在 prompt 的「硬性規定」只要是機械可驗證的，都有對應 Python guardrail 在 orchestrator 裡覆寫 LLM 自評結果，或在 `compliance.check_sections` 裡擋下來：
+
+- `pipeline/evidence_guard.py` — Oxford Level 不可超過 study_design 的 OCEBM 2011 天花板（MA-of-cohort 絕不可 Level I）
+- `pipeline/synthesis_guard.py` — `overall_evidence_strength` 從 CASP levels + contradictions 機械推導
+- `pipeline/voice_scan.py` — regex 掃禁用詞並重算 `pass_threshold_met`
+- `pipeline/apa_guard.py` — `apa_pass` 依 DOI 驗證 + citation 存在性 + LLM format_issues 推導
+- `pipeline/compliance.py` — 句型、字數、引文、匿名、privacy、絕對用語、citation 捏造防線
+
+**回歸驗證工具**：每次新增或修改 guardrail 後執行：
+
+```
+python scripts/retro_validate.py
+```
+
+把 `output/<run-id>/state.json` 的歷史資料全部載入，用當前 guardrail 套一遍，報告「如果當時就有這些 guardrail，會抓到什麼」。用於 (a) 確認 guardrail 捕捉到真實違規、(b) 避免回歸。加 `--json` 輸出給 CI；加 `--strict` 讓任何 guardrail 發現都退出碼 1。
+
 Pipeline 最終輸出 **`<報告>-DRAFT.docx`**（Quarto → pandoc → DOCX，APA 7 CSL 引文排版），含搜尋歷程表、CASP 評讀表、PRISMA 風格流程圖、AI 協作聲明頁。若 `templates/reference.docx`（可選）存在，將做為樣式母本套用院內字型與樣式；否則以 pandoc 預設樣式輸出。
 
 **倫理守則**（依 2026 年台灣護理學會與台灣實證護理學會規範；詳見 `references/ai-disclosure.md`）：
