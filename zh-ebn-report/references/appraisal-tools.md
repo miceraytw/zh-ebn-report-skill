@@ -4,15 +4,17 @@
 
 ## Oxford 證據等級（2011 版）
 
-台灣護理實證報告的標準。依研究設計分 5 級：
+台灣護理實證報告的標準。依研究設計分 5 級（Treatment Benefits 行）：
 
 | 等級 | 研究設計 | 例子 |
 |---|---|---|
-| **Level 1** | 系統性文獻回顧 + Meta-analysis 的 RCT | Cochrane Review of RCTs |
-| **Level 2** | 單一 RCT | 雙盲隨機對照試驗 |
-| **Level 3** | 非隨機對照試驗、世代研究 | Cohort study |
-| **Level 4** | 病例系列、病例對照 | Case-control, Case series |
+| **Level 1** | 系統性文獻回顧 + Meta-analysis of **RCTs** | Cochrane Review of RCTs |
+| **Level 2** | 單一 RCT；或具 dramatic effect 的 observational | 雙盲隨機對照試驗 |
+| **Level 3** | 非隨機對照 cohort、單一 prospective cohort、**SR/MA of cohort** | Cohort study、SR of cohort |
+| **Level 4** | 病例系列、病例對照、回溯性 cohort | Case-control, Case series |
 | **Level 5** | 專家意見、機制推論 | Expert opinion, Textbook |
+
+> **關鍵原則：SR/MA 不會把底下研究的設計「升級」。** 對 20 篇 cohort 做 meta-analysis 仍然是 observational evidence，受 confounding 影響；只有 SR of RCTs 可以判 Level 1。若實際 pipeline 看到 MA of cohort 被標為 Level 1，`compliance` 內建的 guardrail 會自動降級至 Level 3 並記錄 warning。
 
 ### 如何在報告中標示
 
@@ -29,9 +31,18 @@
 | Ia | Level 1 | RCT 的 SR/MA |
 | Ib | Level 2 | 單一 RCT |
 | IIa | Level 3 | Controlled study（非隨機） |
-| IIb | Level 3 | Cohort study |
+| IIb | Level 3 | Cohort study（含 SR/MA of cohort） |
 | III | Level 4 | Case-control, Case series |
 | IV | Level 5 | Expert opinion |
+
+### 其他常用體系對照（交叉驗證）
+
+| 體系 | Level 1/I 定義 | SR/MA of Cohort 落點 |
+|---|---|---|
+| OCEBM 2011 | SR of RCTs | **Level 3** |
+| JBI (Effectiveness, 2014) | 1.a SR of RCTs | **3.a** SR of comparable cohort |
+| Melnyk & Fineout-Overholt (7-level) | SR/MA of RCTs | **Level IV / V**（單一 cohort / SR of descriptive） |
+| GRADE | RCT 預設 HIGH | 預設 LOW（observational） |
 
 ---
 

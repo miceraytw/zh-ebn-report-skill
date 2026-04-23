@@ -22,14 +22,22 @@
 10. 是否與其他證據相符？
 11. 對臨床實務的意義？
 
-## Oxford Level
+## Oxford Level（嚴格依 OCEBM 2011 Treatment Benefits）
 
-- **Level II**：好品質的 Prospective cohort
-- **Level III**：Retrospective cohort 或 untreated control groups in RCT
-- **Level IV**：Case series 或 poor quality cohort
+**Cohort 屬 observational 設計，受 confounding 限制，預設不可高於 Level 3。**
+
+- **Level 2**：**僅在具有 dramatic effect** 時才能判定（罕見；需明確敘明 effect size 為何達「dramatic」門檻）
+- **Level 3**：好品質的 prospective cohort（預設）
+- **Level 4**：retrospective cohort、poor quality cohort、case series
 
 ## 警示
 
 - **追蹤率 < 80%**：警告
 - **無調整干擾因子**：警告
 - **前瞻 vs 回溯性設計**：回溯性設計降 Oxford 等級
+- **將單一 cohort 判為 Level 1 或 Level 2**（無 dramatic effect 佐證）→ **硬錯誤**，guardrail 會自動降級至 Level 3
+
+## 引用來源
+
+- OCEBM 2011：Level 3 = non-randomized controlled cohort / follow-up study
+- GRADE：observational 預設 LOW；upgrade 只在 large effect / dose-response / all-plausible-confounders-against 三種例外情況下成立

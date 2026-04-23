@@ -20,6 +20,7 @@ from ..models import (
     Section,
     TopicVerdict,
 )
+from .evidence_guard import _LEVEL_RANK, _ceiling_for
 from ..spec import (
     MIN_HIGH_LEVEL_EVIDENCE,
     MIN_REFERENCES,
@@ -220,6 +221,11 @@ def check_sections(state: RunState, *, kind: ReportKind) -> ComplianceReport:
     # 4. References (kind-specific minimum)
     report.issues.extend(_check_references(papers, kind=kind))
 
+    # 4b. Defense-in-depth: evidence level must not exceed OCEBM ceiling
+    # for the study design (guardrail should have already fixed this at
+    # APPRAISE phase; this catches regressions / manual state edits).
+    report.issues.extend(_check_evidence_level_vs_design(papers))
+
     # 5. Total-body length (hard page cap for TWNA submissions)
     report.issues.extend(_check_total_length(state, kind=kind))
 
@@ -256,6 +262,37 @@ def _check_title(verdict: TopicVerdict | None) -> list[ComplianceIssue]:
 
 
 _HIGH_LEVELS = {OxfordLevel.I, OxfordLevel.II}
+
+
+def _check_evidence_level_vs_design(
+    papers: list[Paper],
+) -> list[ComplianceIssue]:
+    """Defense-in-depth: flag any Paper whose Oxford level exceeds the OCEBM
+    ceiling for its study design.
+
+    ``evidence_guard.enforce_evidence_levels`` normally runs at the end of the
+    APPRAISE phase and writes corrected values back. This check catches the
+    case where someone edits the state file by hand, or a future code path
+    forgets to call the guardrail. Errors, not warnings — if you see these in
+    a finished run, something upstream is wrong.
+    """
+
+    issues: list[ComplianceIssue] = []
+    for p in papers:
+        ceiling, reason = _ceiling_for(p)
+        if _LEVEL_RANK[p.oxford_level] < _LEVEL_RANK[ceiling]:
+            issues.append(
+                ComplianceIssue(
+                    section="參考文獻",
+                    rule="evidence_level_vs_design",
+                    detail=(
+                        f"[{p.doi}] {p.study_design.value} 標為 "
+                        f"Level {p.oxford_level.value}；OCEBM 2011 最高 "
+                        f"Level {ceiling.value}（{reason}）"
+                    ),
+                )
+            )
+    return issues
 
 
 def _check_references(

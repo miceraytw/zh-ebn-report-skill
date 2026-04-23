@@ -47,7 +47,10 @@
 ## 硬性規定
 
 1. **rationale_zh 禁止模糊詞**：「效度尚可」「似乎」「大致」——必須指向具體段落或數值
-2. **oxford_level_2011**：RCT 預設 Level II；若為高品質 SR of RCT 才給 Level I；若有嚴重偏誤降到 III
+2. **oxford_level_2011**（嚴格依 OCEBM 2011）：
+   - 單一 RCT 預設 **Level II**
+   - 只有 **SR/MA of RCTs** 才能給 **Level I**；SR/MA of cohort 最高只到 Level III
+   - 若有嚴重偏誤（未隨機化、嚴重失訪、未 ITT）降到 **Level III**
 3. **warnings** 偵測規則：
    - `sample_size_below_30`：total sample < 30 任一組
    - `p_value_insignificant_but_strong_claim`：p > 0.05 但作者結論寫「有效」

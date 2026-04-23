@@ -586,6 +586,7 @@ class RunState(BaseModel):
     pico_result: PICOResult | None = None
     search_result: SearchResult | None = None
     casp_results: list[CaspResult] = Field(default_factory=list)
+    evidence_downgrades: list[dict[str, str]] = Field(default_factory=list)
     synthesis: SynthesisResult | None = None
     sections: list[Section] = Field(default_factory=list)
     voice_check: VoiceCheckResult | None = None

@@ -23,6 +23,7 @@ from .compliance import (
     check_sections,
     retry_feedback_for_section,
 )
+from .evidence_guard import enforce_evidence_levels
 from .searcher import run_searches
 
 MAX_COMPLIANCE_RETRIES = 2
@@ -131,6 +132,32 @@ class Orchestrator:
             max_concurrency=self.app.pipeline.max_parallel_casp,
         )
         state.casp_results = results
+
+        # Deterministic guardrail: cap Oxford levels against study design
+        # (e.g. MA-of-cohort cannot be Level I). Runs before synthesis so the
+        # Synthesiser sees normalized evidence levels rather than trusting the
+        # per-paper LLM call.
+        downgrades = enforce_evidence_levels(
+            state.search_result.papers, state.casp_results
+        )
+        if downgrades:
+            log.warning(
+                "evidence_guard 套用 %d 筆降級：\n%s",
+                len(downgrades),
+                "\n".join(d.format() for d in downgrades),
+            )
+            state.evidence_downgrades = [
+                {
+                    "paper_doi": d.paper_doi,
+                    "paper_title": d.paper_title,
+                    "study_design": d.study_design.value,
+                    "original_level": d.original_level.value,
+                    "corrected_level": d.corrected_level.value,
+                    "reason": d.reason,
+                }
+                for d in downgrades
+            ]
+
         state.current_phase = PipelinePhase.APPRAISE
         save_state(self.app.pipeline, state)
         cp.prompt(self.app.pipeline, state, cp.cp5_summary(state), auto_yes=self.auto_yes)

@@ -19,15 +19,33 @@
 9. 益處是否大於傷害與成本？
 10. 資料引用是否完整？
 
-## Oxford Level
+## Oxford Level（嚴格依 OCEBM 2011 Treatment Benefits）
 
-- **Level I**：高品質 SR of RCT，異質性低、搜尋全面、偏誤控制良好
-- **Level II**：一般 SR of RCT 或 SR of Cohort
-- **Level III**：SR of case-control / observational with significant limitations
-- 若僅是 narrative review（非正式 SR），不要給 Level I；給 III 或 IV
+**關鍵原則：SR/MA 不會把底下研究的設計「升級」。對 cohort 做 meta-analysis 仍然是 observational evidence，受 confounding 影響；只有 SR of RCTs 可以判 Level 1。**
+
+- **Level 1**：高品質 SR/MA of **RCTs**，異質性低、搜尋全面、偏誤控制良好
+- **Level 2**：單一 RCT；或具有 dramatic effect 的 observational study
+- **Level 3**：SR/MA of **cohort**；非隨機 controlled cohort；單一 prospective cohort
+- **Level 4**：SR of case-control / case series；case-control；case series；回溯性 cohort
+- **Level 5**：mechanism-based reasoning、專家意見
+
+判定流程（必須依序檢查）：
+
+1. 若納入研究**全部或主要為 RCT** → 可考慮 Level 1（若品質良好）或 Level 2（若有偏誤）
+2. 若納入研究**主要為 cohort / observational** → **最高只能到 Level 3**，不可給 Level 1 或 Level 2
+3. 若納入研究**主要為 case-control / case series** → 最高 Level 4
+4. narrative review（非正式 SR）→ Level 4 或 Level 5
+5. 若混合 RCT 與 observational：依**主要研究設計**或**最弱一環**為準（GRADE 思維）
 
 ## 警示
 
 - **搜尋不全**：資料庫少於 2 個、或未涵蓋 Cochrane/MEDLINE → 警告
 - **異質性高**：I² > 75% 仍合併 meta-analysis → 警告
 - **發表偏誤未評估**：無 funnel plot、Egger's test → 警告
+- **將 SR of cohort 判為 Level 1 或 Level 2** → **這是硬錯誤**，guardrail 會自動降級至 Level 3 並記錄 warning
+
+## 引用來源
+
+- OCEBM Levels of Evidence Working Group. *The Oxford 2011 Levels of Evidence*. Oxford Centre for Evidence-Based Medicine. <https://www.cebm.ox.ac.uk/resources/levels-of-evidence/ocebm-levels-of-evidence>
+- JBI. *Levels of Evidence for Effectiveness (2014)*：SR of comparable cohort = 3.a（與 OCEBM 2011 對齊）
+- GRADE Working Group. Guyatt GH et al. J Clin Epidemiol 2011;64:383-94：observational evidence 預設 LOW quality
