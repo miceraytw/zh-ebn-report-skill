@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from dataclasses import dataclass
 from typing import Any, Literal
 
 from anthropic import AsyncAnthropic
@@ -24,19 +23,9 @@ from tenacity import (
 )
 
 from ..config import LlmConfig
+from .system import CachedSystemBlock
 
 ModelTier = Literal["haiku", "sonnet", "opus"]
-
-
-@dataclass(frozen=True)
-class CachedSystemBlock:
-    """A system prompt block that should be cached (Anthropic prompt caching).
-
-    Used for large, stable content like the references/*.md knowledge base.
-    """
-
-    text: str
-    cache: bool = True
 
 
 class AnthropicClient:

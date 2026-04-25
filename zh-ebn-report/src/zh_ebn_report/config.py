@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,13 +18,13 @@ class LlmConfig:
     """Backend-agnostic LLM configuration.
 
     Resolution order:
-    1. ``LLM_BACKEND=claude_code`` (default) — shell out to ``claude -p`` CLI;
-       uses the user's Claude subscription, no API key required.
-    2. ``LLM_BACKEND=anthropic`` — direct Anthropic SDK; requires
+    1. ``LLM_BACKEND=codex`` — shell out to ``codex exec``.
+    2. ``LLM_BACKEND=claude_code`` — shell out to ``claude -p`` CLI.
+    3. ``LLM_BACKEND=anthropic`` — direct Anthropic SDK; requires
        ``ANTHROPIC_API_KEY`` (or ``LLM_API_KEY``) + optional ``LLM_API_BASE``
        for proxies.
-    3. ``LLM_BACKEND=auto`` — prefer ``claude_code`` when ``claude`` binary is
-       on PATH, else fall back to ``anthropic``.
+    4. ``LLM_BACKEND=auto`` — prefer local CLI backends, else fall back to
+       ``anthropic``.
     """
 
     backend: str
@@ -36,20 +37,38 @@ class LlmConfig:
 
     @classmethod
     def from_env(cls) -> LlmConfig:
-        backend = os.getenv("LLM_BACKEND", "claude_code").lower()
+        backend = os.getenv("LLM_BACKEND", "auto").lower()
         key = os.getenv("ANTHROPIC_API_KEY") or os.getenv("LLM_API_KEY", "")
         base = os.getenv("ANTHROPIC_BASE_URL") or os.getenv("LLM_API_BASE") or None
-        default = os.getenv("LLM_MODEL", "claude-sonnet-4-6")
-        # Model IDs for the SDK backend. The CLI backend uses aliases like
-        # "haiku"/"sonnet"/"opus" natively, but also accepts full IDs.
+        resolved = backend
+        if resolved == "auto":
+            if shutil.which("codex") is not None:
+                resolved = "codex"
+            elif shutil.which("claude") is not None:
+                resolved = "claude_code"
+            else:
+                resolved = "anthropic"
+
+        if resolved == "codex":
+            default_default = "gpt-5.4"
+            haiku_default = "gpt-5.4-mini"
+            sonnet_default = "gpt-5.4"
+            opus_default = "gpt-5.2"
+        else:
+            default_default = "claude-sonnet-4-6"
+            haiku_default = "claude-haiku-4-5-20251001"
+            sonnet_default = "claude-sonnet-4-6"
+            opus_default = "claude-opus-4-7"
+
+        default = os.getenv("LLM_MODEL", default_default)
         return cls(
             backend=backend,
             api_key=key,
             base_url=base,
             default_model=default,
-            haiku_model=os.getenv("LLM_MODEL_HAIKU", "claude-haiku-4-5-20251001"),
-            sonnet_model=os.getenv("LLM_MODEL_SONNET", "claude-sonnet-4-6"),
-            opus_model=os.getenv("LLM_MODEL_OPUS", "claude-opus-4-7"),
+            haiku_model=os.getenv("LLM_MODEL_HAIKU", haiku_default),
+            sonnet_model=os.getenv("LLM_MODEL_SONNET", sonnet_default),
+            opus_model=os.getenv("LLM_MODEL_OPUS", opus_default),
         )
 
 
@@ -98,7 +117,7 @@ class PipelineConfig:
             max_parallel_sections=int(os.getenv("MAX_PARALLEL_SECTION_WRITERS", "6")),
             default_year_range=int(os.getenv("DEFAULT_TARGET_YEAR_RANGE", "5")),
             output_root=_PROJECT_ROOT / "output",
-            skill_root=_PROJECT_ROOT / "zh-ebn-report",
+            skill_root=_PROJECT_ROOT,
             # v0.8: optional LLM-driven keyword tuner for PubMed. Off by
             # default; set ENABLE_KEYWORD_TUNER=1 to enable 1-round retry
             # when initial hits are out of the 100–1000 sweet spot.
