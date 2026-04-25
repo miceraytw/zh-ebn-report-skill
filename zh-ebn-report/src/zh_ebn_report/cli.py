@@ -51,10 +51,14 @@ app = typer.Typer(
     help="台灣護理實證報告自動化 AI 協作 Pipeline",
 )
 
-# Register `tools` subcommand group — pure utilities for Claude Code mode
-# (no LLM call inside Python; LLM work happens via Agent tool dispatch).
+# Register `tools` subcommand group — pure utilities for interactive skill mode
+# (no LLM call inside Python; orchestration happens outside the CLI).
 from .cli_tools import tools_app  # noqa: E402
-app.add_typer(tools_app, name="tools", help="Claude Code 模式下可呼叫的 utility 命令（PubMed / CrossRef / deid / dedup / state）")
+app.add_typer(
+    tools_app,
+    name="tools",
+    help="互動協作模式下可呼叫的 utility 命令（PubMed / CrossRef / deid / dedup / state）",
+)
 
 
 def _ethics_guard(flag: bool) -> None:
@@ -74,18 +78,29 @@ def _load_cfg() -> AppConfig:
     cfg = AppConfig.load()
     backend = cfg.llm.backend
     if backend == "auto":
-        backend = "claude_code" if shutil.which("claude") else "anthropic"
+        if shutil.which("codex"):
+            backend = "codex"
+        elif shutil.which("claude"):
+            backend = "claude_code"
+        else:
+            backend = "anthropic"
     if backend == "anthropic" and not cfg.llm.api_key:
         console.print(
             "[red]錯誤：LLM_BACKEND=anthropic 需 ANTHROPIC_API_KEY。[/]\n"
-            "改設 [cyan]LLM_BACKEND=claude_code[/] 走訂閱（預設），"
-            "並確認 `which claude` 有值。"
+            "改設 [cyan]LLM_BACKEND=codex[/] 或 [cyan]LLM_BACKEND=claude_code[/]，"
+            "或提供可用 API 金鑰。"
+        )
+        raise typer.Exit(2)
+    if backend == "codex" and shutil.which("codex") is None:
+        console.print(
+            "[red]錯誤：PATH 上找不到 `codex` CLI。[/]\n"
+            "請安裝 Codex CLI，或改設 LLM_BACKEND=claude_code / anthropic。"
         )
         raise typer.Exit(2)
     if backend == "claude_code" and shutil.which("claude") is None:
         console.print(
             "[red]錯誤：PATH 上找不到 `claude` CLI。[/]\n"
-            "請安裝 Claude Code，或改設 LLM_BACKEND=anthropic + ANTHROPIC_API_KEY。"
+            "請安裝 Claude Code，或改設 LLM_BACKEND=codex / anthropic。"
         )
         raise typer.Exit(2)
     return cfg

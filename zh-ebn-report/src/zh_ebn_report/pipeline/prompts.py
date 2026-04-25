@@ -5,8 +5,9 @@ Every subagent needs a system prompt composed of:
 2. One or more knowledge-base references (from ``zh-ebn-report/references/``)
 3. A role-specific prompt (from ``src/zh_ebn_report/prompts/*.md``)
 
-Each chunk is wrapped as a :class:`CachedSystemBlock` so Anthropic prompt caching
-is used across the pipeline's many calls.
+Each chunk is wrapped as a :class:`CachedSystemBlock`. Anthropic uses the
+``cache`` marker for prompt caching; CLI-style backends simply flatten the same
+blocks into one prompt string.
 """
 
 from __future__ import annotations
@@ -14,7 +15,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-from ..clients.anthropic import CachedSystemBlock
+from ..clients.system import CachedSystemBlock
 from ..config import PipelineConfig
 
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"

@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from zh_ebn_report.clients.anthropic import CachedSystemBlock
 from zh_ebn_report.clients.audited import AuditedLLMClient
+from zh_ebn_report.clients.system import CachedSystemBlock
 from zh_ebn_report.pipeline.audit import ArtifactStore
 
 

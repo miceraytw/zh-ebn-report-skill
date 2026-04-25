@@ -1,131 +1,154 @@
-# zh-ebn-report
+# zh-ebn-report-codex-skill
 
-[![Build & Release Skill](https://github.com/htlin222/zh-ebn-report-skill/actions/workflows/release.yml/badge.svg)](https://github.com/htlin222/zh-ebn-report-skill/actions/workflows/release.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/htlin222/zh-ebn-report-skill?include_prereleases&label=skill%20version)](https://github.com/htlin222/zh-ebn-report-skill/releases/latest)
+[![Build & Release Skill](https://github.com/miceraytw/zh-ebn-report-skill/actions/workflows/release.yml/badge.svg)](https://github.com/miceraytw/zh-ebn-report-skill/actions/workflows/release.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/miceraytw/zh-ebn-report-skill?include_prereleases&label=skill%20version)](https://github.com/miceraytw/zh-ebn-report-skill/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Skills Protocol](https://img.shields.io/badge/protocol-vercel--labs%2Fskills-blue)](https://github.com/vercel-labs/skills)
-[![Compatible Agents](https://img.shields.io/badge/agents-40%2B-green)](https://github.com/vercel-labs/skills#supported-agents)
 
-> 台灣護理人員撰寫實證護理報告（實證讀書報告、實證案例分析）的完整教練技能——專為護理進階制度 N1–N4 升等、台灣護理學會與台灣實證護理學會審查格式而設計。知識庫 + Python pipeline + utility CLI **打包為一體**，一次安裝即可完整使用。
+> Codex-adapted fork of `zh-ebn-report-skill`，用於台灣護理人員撰寫實證護理報告（實證讀書報告、實證案例分析）。專為護理進階制度 N1-N4 升等、台灣護理學會與台灣實證護理學會審查格式而設計，並保留原本的 5A pipeline、知識庫、Python pipeline 與 utility CLI。
 
-## 這個 skill 給誰用？
+## 這個 skill 給誰用
 
-給**台灣的護理人員**。你只要打入一個糊的題目（例如「早期下床」「壓瘡」「譫妄的處理」），這份 skill 會帶著你跑完實證 5A 步驟，最後產出一份真的可以送審升等的報告草稿。
+給台灣護理人員。只要輸入一個還不夠明確的主題，例如「早期下床」「壓瘡」「譫妄的處理」，這份 skill 會帶著你跑完實證 5A 步驟，最後產出可供升等審查的報告草稿。
 
 ## 能做什麼
 
-- **選題把關**：把糊的題目具體化為符合審查格式的陳述句 + 疑問句版篇名；避開五大地雷主題（文獻極少、爭議太大、倫理敏感、無法操作、非護理範疇）
-- **PICO 建構**：自動輸出中英並列 PICO，禁止「無介入」當 C、強制量化 O、標註 Therapy / Harm / Diagnosis / Prognosis 問題型態
-- **六件套搜尋策略**：主詞 / 同義字 / MeSH / CINAHL Heading / Boolean / 欄位碼；搭配 PubMed 100–1000 甜蜜區校準法則與反向/正向引文追蹤
-- **CASP 評讀**：RCT、SR、Cohort、Qualitative 四套檢核表；Oxford 2011 證據等級；禁止「效度尚可」等含糊語言
-- **綜整整合**：跨篇一致性分析、矛盾點偵測、整體證據強度判定、台灣脈絡可行度（健保、護病比、家屬文化、訓練門檻、組織支持）
-- **分節撰寫員平行 dispatch**：
-  - 讀書報告 8 章：摘要 / 前言 / 主題設定 / 搜尋策略 / 評讀結果 / 綜整 / 應用建議 / 結論
-  - 案例分析 7 章：摘要 / 前言 / 個案介紹 / 方法 / 綜整 / 應用與評值 / 結論
-- **語氣守門員**：攔截「我覺得」「病人」「大致上」「似乎」等違規用語，自動改為「筆者」「個案」「書面語」
-- **APA 7 格式員 + DOI 驗證**：CrossRef API 逐篇驗證 DOI 有效性與 metadata 一致性
+- 選題把關：把模糊題目具體化，避開五大地雷主題
+- PICO 建構：輸出中英並列 PICO，限制錯誤 comparison 與模糊 outcome
+- 六件套搜尋策略：主詞、同義字、MeSH、CINAHL Heading、Boolean、欄位碼
+- CASP 評讀：對應研究設計套用不同 checklist，並標示 Oxford 2011 證據等級
+- 綜整整合：分析跨篇一致性、矛盾點、整體證據強度與台灣臨床可行性
+- 分節撰寫：依報告類型生成章節草稿
+- 語氣守門與 APA 7 檢查：修正台灣護理寫作腔調與格式
+- DOI 驗證、去識別化檢查、審稿 checkpoint 與最終 DOCX 輸出
 
-## AI 使用規範（2026 版台灣護理學會）
+## Pipeline 設計
 
-這份 skill 符合台灣護理學會與台灣實證護理學會規範：AI 可協助完整生成草稿，但：
-- AI 不列為作者
-- 在研究方法或致謝段**主動揭露** AI 工具名稱、版本、使用方式
-- 作者必須**逐節審閱與修訂** AI 產出，並簽署 Audit 責任聲明
-- 建議將 AI 輔助生成部分作為補充資料一併提交
+這份 skill 的核心不是單純的 prompt，而是一條固定的 5A pipeline：
 
-Pipeline 每次輸出的 DOCX 自動附上這三份文件，使用者 audit 後簽名即可送審。
+1. Ask
+2. Acquire
+3. Appraise
+4. Apply
+5. Audit
 
-## Install
+Pipeline 內部保留 10 個具名角色：
+
+1. 題目守門員
+2. PICO 建構員
+3. 搜尋策略師
+4. CASP 評讀員 × N
+5. 綜整整合員
+6. 分節撰寫員 × 4-6
+7. 語氣守門員
+8. APA 7 格式員
+9. 個案敘事員
+10. 應用審計員
+
+在 Codex 版本中，這 10 個角色代表固定的 phase 與責任分工，不代表每次都一定要真的啟動多代理。若執行環境支援且使用者明確要求平行代理，可把互不依賴的 phase 並行化；否則就由單一 Codex session 依同一套流程逐段完成。
+
+## Codex 版定位
+
+這個 repo 原本帶有明確的 Claude / Anthropic 執行路徑。轉成 Codex 版本後，區分如下：
+
+- `SKILL.md` 已可作為 Codex skill 入口使用
+- 互動式協作可由 Codex 直接沿用同一條 5A + 10-role pipeline
+- Python pipeline 的內建 LLM backend 現在支援 `codex`、`claude_code`、`anthropic`、`auto`
+- 也就是說，skill 入口與底層 CLI backend 現在都已經能辨識 Codex 路徑
+
+如果你的目標是用 Codex 做寫作協作、PICO、評讀、章節草稿與審稿 checkpoint，現在已經可用。`zh-ebn-report run` 也可以嘗試透過 `LLM_BACKEND=codex` 跑完整自動化，但實際 subprocess 執行仍取決於本機 `codex` CLI 的權限與登入狀態。
+
+## 安裝與本地使用
+
+若要使用 Python pipeline 的搜尋、CrossRef 驗證與 Quarto 渲染功能：
 
 ```bash
-npx skills add htlin222/zh-ebn-report-skill
-```
-
-安裝後在 Claude Code 等相容 agent 中直接輸入糊題目（例：「我要寫 N3 譫妄報告」），skill 自動觸發。
-
-若要啟用 Python pipeline 的自動化搜尋 / CrossRef 驗證 / Quarto 渲染功能：
-
-```bash
-cd <skill-install-path>/zh-ebn-report
+cd zh-ebn-report
 uv venv && source .venv/bin/activate
 uv pip install -e .
-cp .env.example .env  # 填入 PUBMED_API_KEY / SCOPUS_API_KEY / CROSSREF_MAILTO 等
+cp .env.example .env
 
-# 驗證：
+# 驗證
 zh-ebn-report --help
 zh-ebn-report tools --help
 ```
 
-## Skill 內容（一整包）
+若只使用 skill 層的互動協作，可直接讀取 [zh-ebn-report/SKILL.md](./zh-ebn-report/SKILL.md) 與其中引用的 `references/`。
 
-```
+## Skill 內容
+
+```text
 zh-ebn-report/
-├── SKILL.md                    ← skill 入口，Claude Code 自動讀取
-├── references/                 ← 知識庫（由 SKILL.md 與 subagent 引用）
-│   ├── ai-disclosure.md        — 2026 台灣護理 AI 使用規範 + 揭露/Audit/Subagent 三份模板
-│   ├── appraisal-tools.md      — CASP × 4 checklist + Oxford 2011 證據等級
-│   ├── case-report-template.md — 案例分析完整模板（N3-N4 主用）
-│   ├── phrasing-bank.md        — 台灣護理報告標準句型庫（含 APA 7 範例）
-│   ├── pico-and-search.md      — PICO 設定 + 六件套 + 欄位碼 + 100-1000 校準 + 引文追蹤 + DOI 驗證
-│   ├── reading-report-template.md — 實證讀書報告模板（N1-N2 主用）
-│   ├── subagent-roles.md       — 10 個具名 subagent 分工與輸入/輸出契約
-│   └── topic-selection.md      — 選題指引與五大地雷主題
-├── src/zh_ebn_report/          ← Python pipeline
-│   ├── cli.py                  — 主 CLI 入口（init / run / render / status）
-│   ├── cli_tools.py            — `tools` 子命令：pubmed-search / validate-dois / deid-scan / dedup / update-state / approve-cp
-│   ├── models.py               — Pydantic 契約（TopicVerdict / PICO / SearchStrategy / Paper / CaspResult / ...）
-│   ├── state.py                — output/<run-id>/state.json 持久化
-│   ├── config.py               — 從 .env 讀 API keys
-│   ├── spec/                   — reading/case 模板單一事實來源（字數範圍、最小文獻數）
-│   ├── clients/                — PubMed / Scopus / Embase / CrossRef / OpenAlex / 手動匯入
-│   ├── pipeline/               — Orchestrator + 10 個 subagent 函式 + checkpoints + compliance
-│   ├── prompts/                — 供 Claude Code Agent tool dispatch 讀取的 role prompts
-│   ├── renderers/              — Quarto .qmd 組裝 + BibTeX + 附錄生成
-│   └── utils/                  — deid regex / cross-DB dedup
-├── templates/                  ← Quarto 渲染所需
-│   └── apa-7th-edition.csl
-├── examples/                   ← 示範用初始化設定
-│   ├── example-reading-pressure-ulcer/
-│   └── example-case-delirium/
-├── tests/                      ← Pydantic schema / dedup / deid / bibliography 單元測試
-├── pyproject.toml              ← uv + pip 可安裝的 Python 套件
-└── .env.example                ← API key 範本
+├── SKILL.md
+├── references/
+│   ├── ai-disclosure.md
+│   ├── appraisal-tools.md
+│   ├── case-report-template.md
+│   ├── gordon-11-patterns.md
+│   ├── phrasing-bank.md
+│   ├── pico-and-search.md
+│   ├── reading-report-template.md
+│   ├── subagent-roles.md
+│   └── topic-selection.md
+├── src/zh_ebn_report/
+│   ├── cli.py
+│   ├── cli_tools.py
+│   ├── clients/
+│   ├── pipeline/
+│   ├── prompts/
+│   ├── renderers/
+│   ├── spec/
+│   ├── state.py
+│   └── utils/
+├── templates/
+├── examples/
+├── tests/
+├── pyproject.toml
+└── .env.example
 ```
 
-## 兩種執行模式（同一包內，任選其一）
+## 執行模式
 
-### 模式 A：Claude Code 全手動 dispatch（無需 API key）
+### 模式 A：Codex 互動協作模式
 
-Claude Code session 讀 SKILL.md 後，依 5A 流程自行 dispatch `Agent` tool subagent（haiku/opus），呼叫 `zh-ebn-report tools` 系列 utility 命令處理 DB 搜尋、DOI 驗證、state 更新、Quarto render。**不依賴 Anthropic SDK API key**——Claude Code session 本身就是 LLM。
+適合選題、PICO、搜尋策略、CASP 評讀、章節草稿、語氣修正與 checkpoint 審稿。這個模式保留同樣的 pipeline，但由 Codex 依技能規則執行，不要求底層 CLI 改成 Codex backend。
+
+常見搭配方式：
 
 ```bash
-# 初始化
 zh-ebn-report init --type reading --topic "早期下床" --ward "一般外科" --level N2 --i-accept-audit-responsibility
-# → 取得 run-id
-
-# Claude Code 依序 dispatch subagent 後，呼叫 utility 命令存狀態
 zh-ebn-report tools pubmed-search --query "..." --year-start 2021 --year-end 2026 --max 25
 zh-ebn-report tools validate-dois --run-id <id> --write-back
-zh-ebn-report tools select-papers <id> --dois "10.xxx,10.yyy,..."
-zh-ebn-report tools append-section <id> --file section.json
-zh-ebn-report tools approve-cp <id> CP1 --choice 批准 --rationale "..."
-zh-ebn-report tools deid-scan ./case.yaml
 zh-ebn-report render <id>
 ```
 
-### 模式 B：Python 自動化（需 `ANTHROPIC_API_KEY`）
+### 模式 B：Python 自動化模式
 
-如有 Anthropic API key，可全自動跑完 9 個 phase（CLI 內部自行 dispatch LLM）：
+若要用現有內建 backend 跑自動化 phase，仍須使用專案目前支援的 backend：
 
 ```bash
-export ANTHROPIC_API_KEY=sk-...
+export LLM_BACKEND=codex
+# 或
+export LLM_BACKEND=claude_code
+# 或
+export LLM_BACKEND=anthropic
+
 zh-ebn-report init ...
-zh-ebn-report run <run-id>        # 一路跑完 9 CP（CP1/CP4/CP9 仍需人工確認）
+zh-ebn-report run --resume <run-id>
 ```
 
-## Protocol
+`LLM_BACKEND=codex` 需要系統上可執行 `codex` CLI；`LLM_BACKEND=claude_code` 需要 `claude` CLI；`LLM_BACKEND=anthropic` 需要相應 API 金鑰。`LLM_BACKEND=auto` 會優先選 `codex`，再選 `claude_code`，最後才回退到 `anthropic`。
 
-遵循 [vercel-labs/skills](https://github.com/vercel-labs/skills) protocol。每次 push 到 `main` 觸發 GitHub Action，打包整個 `zh-ebn-report/` 目錄（SKILL.md + 知識庫 + Python pipeline + templates + examples + tests）成 `.skill` 檔並發布 release（以 commit SHA 作為版本標籤）。
+## AI 使用規範（2026 版台灣護理學會）
+
+這份 skill 依台灣護理學會與台灣實證護理學會規範設計。AI 可協助生成草稿，但：
+
+- AI 不列為作者
+- 必須在研究方法或致謝段主動揭露工具名稱、版本與使用方式
+- 作者必須逐節審閱與修訂 AI 產出
+- 作者必須簽署 Audit 責任聲明
+- 建議將 AI 輔助生成部分作為補充資料一併提交
+
+Pipeline 會自動附上必要的揭露與審稿紀錄文件，但最終責任仍在使用者。
 
 ## License
 

@@ -1,0 +1,7 @@
+interface:
+  display_name: "台灣護理實證報告教練（Codex）"
+  short_description: "協助撰寫台灣護理 EBN 報告與案例分析"
+  default_prompt: "Use $zh-ebn-report-codex to help me draft a Taiwan nursing evidence-based report with the same 5A pipeline and checkpoint review flow."
+
+policy:
+  allow_implicit_invocation: true

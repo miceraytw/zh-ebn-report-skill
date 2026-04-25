@@ -42,7 +42,7 @@ from tenacity import (
 )
 
 from ..config import LlmConfig
-from .anthropic import CachedSystemBlock  # reuse the concrete dataclass
+from .system import CachedSystemBlock
 
 log = logging.getLogger(__name__)
 

@@ -1,17 +1,4 @@
-"""Backend-agnostic LLM client protocol + factory.
-
-The pipeline no longer talks to ``AnthropicClient`` directly. Instead, callers
-depend on the :class:`LLMClient` protocol and obtain an instance via
-:func:`make_llm_client`, which chooses between:
-
-- ``LLM_BACKEND=claude_code`` (default) — shells out to the ``claude`` CLI,
-  using the user's subscription session. No ``ANTHROPIC_API_KEY`` required.
-- ``LLM_BACKEND=anthropic`` — direct Anthropic SDK, uses
-  ``ANTHROPIC_API_KEY`` or ``LLM_API_KEY`` as before.
-
-Both implementations must honour the same ``complete`` / ``complete_json``
-signatures so that ``pipeline/agents.py`` can stay backend-agnostic.
-"""
+"""Backend-agnostic LLM client protocol + factory."""
 
 from __future__ import annotations
 
@@ -19,18 +6,9 @@ import shutil
 from typing import Any, Literal, Protocol
 
 from ..config import LlmConfig
+from .system import CachedSystemBlock
 
 ModelTier = Literal["haiku", "sonnet", "opus"]
-
-
-class CachedSystemBlock(Protocol):
-    """Structural reference — both backends use the concrete dataclass from
-    :mod:`clients.anthropic`. Declared here for typing without a circular
-    import: the Claude Code backend treats ``cache_control`` as a no-op (the
-    CLI manages its own prompt cache)."""
-
-    text: str
-    cache: bool
 
 
 class LLMClient(Protocol):
@@ -61,9 +39,10 @@ class LLMClient(Protocol):
 
 
 def _auto_detect_backend() -> str:
-    """Prefer Claude Code CLI when the ``claude`` binary is on PATH; fall
-    back to Anthropic API otherwise. Overridden by ``LLM_BACKEND`` env."""
+    """Prefer local CLIs over direct API usage when available."""
 
+    if shutil.which("codex") is not None:
+        return "codex"
     if shutil.which("claude") is not None:
         return "claude_code"
     return "anthropic"
@@ -80,6 +59,11 @@ def make_llm_client(cfg: LlmConfig) -> LLMClient:
     if backend == "auto":
         backend = _auto_detect_backend()
 
+    if backend == "codex":
+        from .codex_cli import CodexCliClient  # noqa: PLC0415
+
+        return CodexCliClient(cfg)
+
     if backend == "claude_code":
         # Lazy import so users without the Anthropic SDK can still run through
         # the CLI backend. PLC0415 is intentional here.
@@ -93,5 +77,6 @@ def make_llm_client(cfg: LlmConfig) -> LLMClient:
         return AnthropicClient(cfg)
 
     raise ValueError(
-        f"Unknown LLM_BACKEND={backend!r}; expected 'claude_code' | 'anthropic' | 'auto'"
+        "Unknown LLM_BACKEND="
+        f"{backend!r}; expected 'codex' | 'claude_code' | 'anthropic' | 'auto'"
     )

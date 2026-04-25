@@ -15,13 +15,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from zh_ebn_report.clients.anthropic import CachedSystemBlock
 from zh_ebn_report.clients.claude_code_cli import (
     ClaudeCodeCliClient,
     ClaudeCodeCliError,
     _extract_result_text,
     _parse_model_json,
 )
+from zh_ebn_report.clients.system import CachedSystemBlock
 from zh_ebn_report.config import LlmConfig
 
 
